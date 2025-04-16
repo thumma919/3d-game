@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌍 Realistic 3D Multiplayer Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #info, #ui, #npc-dialogue {
+      position: absolute;
+      color: white;
+      font-family: sans-serif;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 4px;
+      z-index: 1;
+    }
+    #info { top: 10px; left: 10px; }
+    #ui { top: 10px; right: 10px; }
+    #npc-dialogue { bottom: 10px; left: 10px; display: none; }
+  </style>
+</head>
+<body>
+  <div id="info">🌍 Loading world...</div>
+  <div id="ui">
+    <div>💰 Bux: <span id="bux">0</span></div>
+    <div>🏃‍♂️ Stamina: <span id="stamina">100</span></div>
+    <div>🎒 Inventory: <span id="inventory">[]</span></div>
+  </div>
+  <div id="npc-dialogue"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <!-- Core Systems: Inventory, Currency, Stamina -->
+  <script>
+    const inventory = [];
+    let bux = 0;
+    let stamina = 100;
+
+    function updateUI() {
+      document.getElementById('bux').textContent = bux;
+      document.getElementById('stamina').textContent = stamina.toFixed(0);
+      document.getElementById('inventory').textContent = JSON.stringify(inventory);
+    }
+
+    function collectItem(itemName) {
+      inventory.push(itemName);
+      bux += 10;
+      stamina -= 5;
+      updateUI();
+    }
+
+    function sellItems() {
+      bux += inventory.length * 10;
+      inventory.length = 0;
+      updateUI();
+    }
+
+    function regenerateStamina() {
+      if (stamina < 100) {
+        stamina += 0.1;
+        updateUI();
+      }
+    }
+    setInterval(regenerateStamina, 100);
+  </script>
+
+  <!-- NPC Interaction -->
+  <script>
+    function showDialogue(text) {
+      const dialogue = document.getElementById('npc-dialogue');
+      dialogue.style.display = 'block';
+      dialogue.textContent = text;
+      setTimeout(() => dialogue.style.display = 'none', 4000);
+    }
+
+    function interactWithNPC(npcName) {
+      if (npcName === 'Vendor') {
+        showDialogue('Welcome! Want to sell items? Press [S] to sell.');
+        document.addEventListener('keydown', (e) => {
+          if (e.key.toLowerCase() === 's') sellItems();
+        }, { once: true });
+      }
+    }
+  </script>
+
+  <!-- Simulated usage -->
+  <script>
+    setTimeout(() => interactWithNPC('Vendor'), 2000); // Simulate NPC encounter
+  </script>
+
+  <!-- 3D Scene Setup -->
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(5, 10, 7.5);
+    scene.add(light);
+
+    camera.position.z = 5;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
